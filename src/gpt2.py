@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from dataclasses import dataclass
 
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 
@@ -32,7 +33,7 @@ class GPT2(nn.Module):
             wte = nn.Embedding(config.vocab_size,config.n_embd),
             wpe = nn.Embedding(config.block_size,config.n_embd),
             
-            h = nn.ModuleList(*[Block(config) for i in range(config.n_layer)]),
+            h = nn.Sequential(*[Block(config) for i in range(config.n_layer)]),
             
             ln = nn.LayerNorm(config.n_embd),
             lm_head = nn.Linear(config.n_embd,config.vocab_size)
@@ -41,9 +42,28 @@ class GPT2(nn.Module):
         
         
         
-    def forward(self,x):
-        pass
+    def forward(self,x,targets= None):
         
+        tx = self.transformer[wte](x)
+        px = self.transformer[wpe](torch.arnage(self.config.block_size,device=device))
+        
+        x = tx+px
+        
+        x = self.transformer[h](x)
+        
+        x = self.transformer[ln](x)
+        
+        logits = self.transformer[lm_head](x)
+        
+        
+        if targets is None:
+            return logits
+        
+        else:
+            loss = F.cross_entropy(logits.view(-1,self.config.n_embd),targets.view(-1))
+            return logits,loss
+            
+
         
         
     
@@ -59,26 +79,27 @@ class Block(nn.Module):
         self.config = config
         
         
-        self.multi_head = MultiHead()
-        self.projection = nn.Linear()
+        self.multi_head = MultiHead(config)
+        self.mlp = MLP(config)
         
-        self.ln1 = nn.LayerNorm()
-        self.ln2 = nn.LayerNorm()
+        self.ln1 = nn.LayerNorm(config.n_embd)
+        self.ln2 = nn.LayerNorm(config.n_embd)
         
         
         
     def forward(self,x):
         
-        pass
+        x = self.multi_head(self.ln1(x)) + x
+        x = self.mlp(self.ln2(x)) + x
         
-        
+        return x
         
         
         
 # ----------------------------------------------------------------------------------        
         
         
-class MPL(nn.Module):
+class MLP(nn.Module):
        
     def __init__(self,config):
         super().__init__()
@@ -104,9 +125,7 @@ class MultiHead(nn.Module):
         super().__init__()
         self.config = config
         
-        head_size = config.n_embd // config.n_head
-
-        self.sa_heads = nn.ModuleList(*[SelfAttentionHead(head_size) for i in range(config.n_head)])
+        self.sa_heads = nn.ModuleList([SelfAttentionHead(config) for i in range(config.n_head)])
         self.projection = nn.Linear(config.n_embd,config.n_embd)
         
         
@@ -135,7 +154,7 @@ class SelfAttentionHead(nn.Module):
         self.q = nn.Linear(config.n_embd,self.head_size)
         self.v = nn.Linear(config.n_embd,self.head_size)
         
-        self.register_buffer('tril' , torch.tril(torch.ones(config.block_size,config.block_size)))
+        self.register_buffer('tril' , torch.tril(torch.ones(config.block_size,config.block_size,device=device)))
         
         
         
@@ -155,10 +174,4 @@ class SelfAttentionHead(nn.Module):
         
         return out
         
-# ----------------------------------------------------------------------------------     
-        
-        
-        
-        
-        
-        
+# ----------------------------------------------------------------------------------          
