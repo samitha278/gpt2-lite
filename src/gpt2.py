@@ -17,6 +17,8 @@ class GPT2Config:
     n_embd : int = 128
     
 
+    
+# ----------------------------------------------------------------------------------
 
 
 class GPT2(nn.Module):
@@ -45,8 +47,7 @@ class GPT2(nn.Module):
         
         
     
-
-
+# ----------------------------------------------------------------------------------
 
 
 
@@ -59,11 +60,22 @@ class Block(nn.Module):
         
         
         self.multi_head = MultiHead()
-        self.projection = nn.Linear(n_embd,)
+        self.projection = nn.Linear()
+        
+        self.ln1 = nn.LayerNorm()
+        self.ln2 = nn.LayerNorm()
+        
+        
+        
+    def forward(self,x):
+        
+        pass
         
         
         
         
+        
+# ----------------------------------------------------------------------------------        
         
         
 class MPL(nn.Module):
@@ -71,10 +83,11 @@ class MPL(nn.Module):
     def __init__(self,config):
         super().__init__()
         self.config = config
+        
         self.mlp = nn.Sequential(
-            nn.Linear(n_embd,4*n_embd),
+            nn.Linear(config.n_embd,4*config.n_embd),
             nn.ReLU(),
-            nn.Linear(4*n_embd,n_embd)            
+            nn.Linear(4*config.n_embd,config.n_embd)            
         )
         
     def forward(self,x):
@@ -83,7 +96,7 @@ class MPL(nn.Module):
         
         
         
-        
+# ----------------------------------------------------------------------------------       
         
 class MultiHead(nn.Module):
     
@@ -91,10 +104,10 @@ class MultiHead(nn.Module):
         super().__init__()
         self.config = config
         
-        head_size = n_embd // n_head
+        head_size = config.n_embd // config.n_head
 
-        self.sa_heads = nn.ModuleList(*[SelfAttentionHead(head_size) for i in range(n_head)])
-        self.projection = nn.Linear(n_embd,n_embd)
+        self.sa_heads = nn.ModuleList(*[SelfAttentionHead(head_size) for i in range(config.n_head)])
+        self.projection = nn.Linear(config.n_embd,config.n_embd)
         
         
     def forward(self,x):
@@ -108,8 +121,7 @@ class MultiHead(nn.Module):
         
       
       
-  
-        
+# ----------------------------------------------------------------------------------       
         
         
 class SelfAttentionHead(nn.Module):
@@ -117,24 +129,33 @@ class SelfAttentionHead(nn.Module):
     def __init__(self,config):
         super().__init__()
         self.config = config
-        self.head_size = head_size
+        self.head_size = config.n_embd // config.n_head
         
-        self.k = nn.Linear(n_embd,head_size)
-        self.q = nn.Linear(n_embd,head_size)
-        self.v = nn.Linear(n_embd,head_size)
+        self.k = nn.Linear(config.n_embd,self.head_size)
+        self.q = nn.Linear(config.n_embd,self.head_size)
+        self.v = nn.Linear(config.n_embd,self.head_size)
         
-        self.register_buffer('tril' , torch.tril(torch.ones(block_size,block_size)))
+        self.register_buffer('tril' , torch.tril(torch.ones(config.block_size,config.block_size)))
         
         
         
     def forward(self,x):
         
-        
+        B,T,C = x.shape
         
         key = self.k(x)
         query = self.q(x)
         
         weight = query @ key.transpose(-2,-1) * self.head_size**-0.5
+        weight = weight.mask_fill(self.tril[:T,:T]==0,float('-inf'))
+        weight = F.softmax(weight, dim = -1)
+        
+        value = self.v(x) 
+        out = weight @ value
+        
+        return out
+        
+# ----------------------------------------------------------------------------------     
         
         
         
