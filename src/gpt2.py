@@ -36,9 +36,10 @@ class GPT2(nn.Module):
             h = nn.Sequential(*[Block(config) for i in range(config.n_layer)]),
             
             ln = nn.LayerNorm(config.n_embd),
-            lm_head = nn.Linear(config.n_embd,config.vocab_size)
         
         ))
+        
+        lm_head = nn.Linear(config.n_embd,config.vocab_size, bias=False)
         
         
         
@@ -53,7 +54,7 @@ class GPT2(nn.Module):
         
         x = self.transformer.ln(x)
         
-        logits = self.transformer.lm_head(x)
+        logits = self.lm_head(x)
         
         
         if targets is None:
@@ -111,7 +112,7 @@ class MLP(nn.Module):
         
         self.mlp = nn.Sequential(
             nn.Linear(config.n_embd,4*config.n_embd),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(4*config.n_embd,config.n_embd)            
         )
         
