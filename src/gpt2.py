@@ -44,16 +44,16 @@ class GPT2(nn.Module):
         
     def forward(self,x,targets= None):
         
-        tx = self.transformer[wte](x)
-        px = self.transformer[wpe](torch.arnage(self.config.block_size,device=device))
+        tx = self.transformer.wte(x)
+        px = self.transformer.wpe(torch.arnage(self.config.block_size,device=device))
         
         x = tx+px
         
-        x = self.transformer[h](x)
+        x = self.transformer.h(x)
         
-        x = self.transformer[ln](x)
+        x = self.transformer.ln(x)
         
-        logits = self.transformer[lm_head](x)
+        logits = self.transformer.lm_head(x)
         
         
         if targets is None:
@@ -63,6 +63,10 @@ class GPT2(nn.Module):
             loss = F.cross_entropy(logits.view(-1,self.config.n_embd),targets.view(-1))
             return logits,loss
             
+            
+            
+    def generate(self,idx,max_token):
+        pass
 
         
         
