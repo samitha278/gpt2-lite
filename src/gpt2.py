@@ -41,9 +41,11 @@ class GPT2(nn.Module):
 
 
     def forward(self,x,targets= None):
-        
+
+        B,T = x.shape 
+        assert T<= self.config.block_size   # positional embd table max size = block_size
         tx = self.transformer.wte(x)       #token embedding
-        px = self.transformer.wpe(torch.arnage(self.config.block_size,device=device)) #positional embedding
+        px = self.transformer.wpe(torch.arange(0,T,self.config.block_size,device=device)) #positional embedding
         
         x = tx+px     # add both
         
@@ -122,8 +124,8 @@ class Block(nn.Module):
         
     def forward(self,x):
         
-        x = self.attn(self.ln1(x)) + x
-        x = self.mlp(self.ln2(x)) + x
+        x = self.attn(self.ln_1(x)) + x
+        x = self.mlp(self.ln_2(x)) + x
         
         return x
         
@@ -139,12 +141,13 @@ class MLP(nn.Module):
         self.config = config
         
         self.c_fc = nn.Linear(config.n_embd,4*config.n_embd)
+        self.gelu = nn.GELU()
         self.c_proj = nn.Linear(4*config.n_embd,config.n_embd)            
   
         
     def forward(self,x):
         x = self.c_fc(x)
-        x = nn.GELU(x)
+        x = self.gelu(x)
         x = self.c_proj(x)
 
         return x
