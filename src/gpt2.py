@@ -6,16 +6,13 @@ from dataclasses import dataclass
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-
-
-
 @dataclass
 class GPT2Config:
-    block_size : int = 128
-    vocab_size : int = 65
-    n_layer : int = 6
-    n_head : int = 6
-    n_embd : int = 128
+    block_size : int = 1024
+    vocab_size : int = 50257
+    n_layer : int = 12
+    n_head : int = 12
+    n_embd : int = 768
     
 
     
@@ -33,16 +30,16 @@ class GPT2(nn.Module):
             wte = nn.Embedding(config.vocab_size,config.n_embd),
             wpe = nn.Embedding(config.block_size,config.n_embd),
             
-            block = nn.Sequential(*[Block(config) for i in range(config.n_layer)]),
+            h = nn.ModuleList([Block(config) for i in range(config.n_layer)]),
             
-            ln = nn.LayerNorm(config.n_embd),
+            ln_f = nn.LayerNorm(config.n_embd),
         
         ))
         
-        lm_head = nn.Linear(config.n_embd,config.vocab_size, bias=False)
-        
-        
-        
+        self.lm_head = nn.Linear(config.n_embd,config.vocab_size, bias=False)
+
+
+
     def forward(self,x,targets= None):
         
         tx = self.transformer.wte(x)       #token embedding
@@ -50,12 +47,12 @@ class GPT2(nn.Module):
         
         x = tx+px     # add both
         
-        x = self.transformer.block(x) 
+        for block in self.transformer.h:
+          x = block(x)
         
-        x = self.transformer.ln(x)
+        x = self.transformer.ln_f(x)
         
         logits = self.lm_head(x)
-        
         
         if targets is None:
             return logits
@@ -63,38 +60,69 @@ class GPT2(nn.Module):
         else:
             loss = F.cross_entropy(logits.view(-1,self.config.n_embd),targets.view(-1))
             return logits,loss
-            
-            
+
+
+
+    @classmethod
+    def from_pretrained(cls, model_type='gpt2'):
+        from transformers import GPT2LMHeadModel
+        assert model_type == 'gpt2'
+
+        config_args = dict(n_layer=12, n_head=12, n_embd=768, vocab_size=50257, block_size=1024)
+        config = GPT2Config(**config_args)
+        model = GPT2(config)
+
+        sd = model.state_dict()
+        sd_keys = [k for k in sd.keys() if not k.endswith('.attn.bias')]
+
+        model_hf = GPT2LMHeadModel.from_pretrained(model_type)
+        sd_hf = model_hf.state_dict()
+        sd_keys_hf = [k for k in sd_hf.keys() if not k.endswith(('.attn.masked_bias', '.attn.bias'))]
+
+        transposed = ['attn.c_attn.weight', 'attn.c_proj.weight', 'mlp.c_fc.weight', 'mlp.c_proj.weight']
+        assert len(sd_keys_hf) == len(sd_keys)
+
+        for k in sd_keys_hf:
+            if any(k.endswith(w) for w in transposed):
+                assert sd_hf[k].shape[::-1] == sd[k].shape
+                with torch.no_grad():
+                    sd[k].copy_(sd_hf[k].t())
+            else:
+                assert sd_hf[k].shape == sd[k].shape
+                with torch.no_grad():
+                    sd[k].copy_(sd_hf[k])
+
+        return model
+
+        
+          
+    
+                 
             
     def generate(self,idx,max_token):
         pass
 
         
-        
-    
+   
 # ----------------------------------------------------------------------------------
 
 
 
 class Block(nn.Module):
     
-    
     def __init__(self,config):
         super().__init__()
         self.config = config
         
-        
-        self.multi_head = Attention(config)
+        self.ln_1 = nn.LayerNorm(config.n_embd)
+        self.attn = SelfAttention(config)
+        self.ln_2 = nn.LayerNorm(config.n_embd)
         self.mlp = MLP(config)
-        
-        self.ln1 = nn.LayerNorm(config.n_embd)
-        self.ln2 = nn.LayerNorm(config.n_embd)
-        
         
         
     def forward(self,x):
         
-        x = self.multi_head(self.ln1(x)) + x
+        x = self.attn(self.ln1(x)) + x
         x = self.mlp(self.ln2(x)) + x
         
         return x
@@ -110,20 +138,19 @@ class MLP(nn.Module):
         super().__init__()
         self.config = config
         
-        self.mlp = nn.Sequential(
-            nn.Linear(config.n_embd,4*config.n_embd),
-            nn.GELU(),
-            nn.Linear(4*config.n_embd,config.n_embd)            
-        )
+        self.c_fc = nn.Linear(config.n_embd,4*config.n_embd)
+        self.c_proj = nn.Linear(4*config.n_embd,config.n_embd)            
+  
         
     def forward(self,x):
-        out = self.mlp(x)
-        return out
+        x = self.c_fc(x)
+        x = nn.GELU(x)
+        x = self.c_proj(x)
+
+        return x
         
-        
-        
-# ----------------------------------------------------------------------------------       
-        
+# ----------------------------------------------------------------------------------     
+
 class SelfAttention(nn.Module):
 
     def __init__(self, config):
@@ -131,9 +158,10 @@ class SelfAttention(nn.Module):
 
         block_size = config.block_size
 
-        self.n_head = n_embd = config.n_head
-        self.n_embd = n_head = config.n_embd
+        self.n_head = n_head = config.n_head
+        self.n_embd = n_embd = config.n_embd
 
+        
         assert n_embd % n_head == 0
         self.head_size = n_embd // n_head
         
@@ -165,5 +193,5 @@ class SelfAttention(nn.Module):
         
         y = self.c_proj(y)
         return y
+ 
         
-# ----------------------------------------------------------------------------------          
