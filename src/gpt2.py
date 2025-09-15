@@ -33,7 +33,7 @@ class GPT2(nn.Module):
             wte = nn.Embedding(config.vocab_size,config.n_embd),
             wpe = nn.Embedding(config.block_size,config.n_embd),
             
-            h = nn.Sequential(*[Block(config) for i in range(config.n_layer)]),
+            block = nn.Sequential(*[Block(config) for i in range(config.n_layer)]),
             
             ln = nn.LayerNorm(config.n_embd),
         
@@ -45,12 +45,12 @@ class GPT2(nn.Module):
         
     def forward(self,x,targets= None):
         
-        tx = self.transformer.wte(x)
-        px = self.transformer.wpe(torch.arnage(self.config.block_size,device=device))
+        tx = self.transformer.wte(x)       #token embedding
+        px = self.transformer.wpe(torch.arnage(self.config.block_size,device=device)) #positional embedding
         
-        x = tx+px
+        x = tx+px     # add both
         
-        x = self.transformer.h(x)
+        x = self.transformer.block(x) 
         
         x = self.transformer.ln(x)
         
@@ -84,7 +84,7 @@ class Block(nn.Module):
         self.config = config
         
         
-        self.multi_head = MultiHead(config)
+        self.multi_head = Attention(config)
         self.mlp = MLP(config)
         
         self.ln1 = nn.LayerNorm(config.n_embd)
@@ -124,59 +124,44 @@ class MLP(nn.Module):
         
 # ----------------------------------------------------------------------------------       
         
-class MultiHead(nn.Module):
-    
-    def __init__(self,config):
-        super().__init__()
-        self.config = config
-        
-        self.sa_heads = nn.ModuleList([SelfAttentionHead(config) for i in range(config.n_head)])
-        self.projection = nn.Linear(config.n_embd,config.n_embd)
-        
-        
-    def forward(self,x):
-        
-        out =  torch.cat([sa(x) for sa in self.sa_heads],dim=1)
-        out = self.projection(out)
-        
-        return out
-    
-        
-        
-      
-      
-# ----------------------------------------------------------------------------------       
-        
-        
-class SelfAttentionHead(nn.Module):
-    
-    def __init__(self,config):
-        super().__init__()
-        self.config = config
-        self.head_size = config.n_embd // config.n_head
-        
-        self.k = nn.Linear(config.n_embd,self.head_size)
-        self.q = nn.Linear(config.n_embd,self.head_size)
-        self.v = nn.Linear(config.n_embd,self.head_size)
-        
-        self.register_buffer('tril' , torch.tril(torch.ones(config.block_size,config.block_size,device=device)))
-        
-        
-        
-    def forward(self,x):
-        
-        B,T,C = x.shape
-        
-        key = self.k(x)
-        query = self.q(x)
-        
-        weight = query @ key.transpose(-2,-1) * self.head_size**-0.5
-        weight = weight.mask_fill(self.tril[:T,:T]==0,float('-inf'))
-        weight = F.softmax(weight, dim = -1)
-        
-        value = self.v(x) 
-        out = weight @ value
-        
-        return out
+class Attention(nn.Module):
+
+
+  def __init__(self,config):
+    super().__init__()
+
+    block_size = config.block_size
+    n_embd = config.n_embd
+    n_head = config.n_head
+    head_size = n_embd // n_head 
+    self.head_size = head_size
+
+
+    self.key = nn.ModuleList(nn.Linear(n_embd,head_size) for _ in range(n_head))
+    self.query = nn.ModuleList(nn.Linear(n_embd,head_size) for _ in range(n_head))
+    self.value = nn.ModuleList(nn.Linear(n_embd,head_size) for _ in range(n_head))
+
+    self.register_buffer('tril',torch.tril(torch.ones(block_size,block_size)))
+
+
+  def forward(self,x):
+
+
+    key = torch.stack([k(x) for k in self.key],dim=1)
+    query = torch.stack([q(x) for q in self.query],dim=1)
+
+    weight = query @ key.transpose(-1,-2)
+    weight = weight.masked_fill(self.tril[:]==0,float('-inf'))
+    weight = F.softmax(weight,dim=-1)
+
+    value = torch.stack([v(x) for v in self.value],dim=1)
+
+    out = weight @ value
+
+    B,nh,T,C = out.shape
+    out = out.permute(0,2,1,3)
+    out = out.reshape(B,T,nh*C)
+
+    return out
         
 # ----------------------------------------------------------------------------------          
