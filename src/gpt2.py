@@ -124,44 +124,46 @@ class MLP(nn.Module):
         
 # ----------------------------------------------------------------------------------       
         
-class Attention(nn.Module):
+class SelfAttention(nn.Module):
+
+    def __init__(self, config):
+        super().__init__()
+
+        block_size = config.block_size
+
+        self.n_head = n_embd = config.n_head
+        self.n_embd = n_head = config.n_embd
+
+        assert n_embd % n_head == 0
+        self.head_size = n_embd // n_head
+        
+        self.c_attn = nn.Linear(n_embd, 3 * n_embd)     # fan out : n_head * 3 * head_size  
+        
+        self.c_proj = nn.Linear(n_embd, n_embd)
+        
+        self.register_buffer("bias", torch.tril(torch.ones(block_size, block_size)))
 
 
-  def __init__(self,config):
-    super().__init__()
 
-    block_size = config.block_size
-    n_embd = config.n_embd
-    n_head = config.n_head
-    head_size = n_embd // n_head 
-    self.head_size = head_size
+    def forward(self, x):
+        B, T, C = x.size()  # C = n_embd = n_head * head_size
+        
+        qkv = self.c_attn(x)    # B,T, 3*n_embd
 
-
-    self.key = nn.ModuleList(nn.Linear(n_embd,head_size) for _ in range(n_head))
-    self.query = nn.ModuleList(nn.Linear(n_embd,head_size) for _ in range(n_head))
-    self.value = nn.ModuleList(nn.Linear(n_embd,head_size) for _ in range(n_head))
-
-    self.register_buffer('tril',torch.tril(torch.ones(block_size,block_size)))
-
-
-  def forward(self,x):
-
-
-    key = torch.stack([k(x) for k in self.key],dim=1)
-    query = torch.stack([q(x) for q in self.query],dim=1)
-
-    weight = query @ key.transpose(-1,-2)
-    weight = weight.masked_fill(self.tril[:]==0,float('-inf'))
-    weight = F.softmax(weight,dim=-1)
-
-    value = torch.stack([v(x) for v in self.value],dim=1)
-
-    out = weight @ value
-
-    B,nh,T,C = out.shape
-    out = out.permute(0,2,1,3)
-    out = out.reshape(B,T,nh*C)
-
-    return out
+        q, k, v = qkv.split(self.n_embd, dim=2)    # each : B,T, n_head * head_size
+        
+        k = k.view(B, T, self.n_head, self.head_size).transpose(1, 2)    # B, n_head, T, head_size
+        q = q.view(B, T, self.n_head, self.head_size).transpose(1, 2)    # ""     
+        v = v.view(B, T, self.n_head, self.head_size).transpose(1, 2)    # ""     
+        
+        att = (q @ k.transpose(-2, -1)) * (self.head_size**-0.5)         # B, n_head, T, T
+        att = att.masked_fill(self.bias[:T,:T] == 0, float('-inf'))
+        att = F.softmax(att, dim=-1)
+        
+        y = att @ v        # B, n_head, T, head_size
+        y = y.transpose(1, 2).contiguous().view(B, T, C)   # B, T , n_embd   (n_embd = n_head * head_size)
+        
+        y = self.c_proj(y)
+        return y
         
 # ----------------------------------------------------------------------------------          
