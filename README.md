@@ -89,7 +89,7 @@ Hello World ! I'm LLM was being the of the and on the you just, one (: the most 
     </td>
     <td valign="top" width="50%">
       <h4>Loss Curve</h4>
-      <img src="images/s1.png" alt="Loss curve - Step 1" width="400"/>
+      <img src="images/s1.png" alt="Loss curve - Step 1" width="450"/>
     </td>
   </tr>
 </table>

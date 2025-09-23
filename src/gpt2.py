@@ -44,6 +44,20 @@ class GPT2(nn.Module):
         #Save ~38M parameters
         #Forces embeddings and output space to be in the same semantic space. (If “dog” is close to “cat” in embedding space, model is also encouraged to output them similarly).
 
+        
+        self.apply(self._init_weights)
+        
+        
+        
+    def _init_weights(self,module):
+        
+        if isinstance(module,nn.Linear):
+            torch.nn.init.normal_(module.weight,mean=0.0,std=0.02)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bais)
+        elif isinstance(module,nn.Embedding):
+            torch.nn.init.normal_(module.weight,mean=0.0,std=0.02)
+            
 
 
     def forward(self,x,targets= None):
