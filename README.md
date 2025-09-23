@@ -70,34 +70,29 @@ Hello World ! I'm LLM was being the of the and on the you just, one (: the most 
 - Context Length (T): 8 
 
 
-<div style="display: flex; align-items: flex-start; gap: 20px;">
-
-<div>
-
-
-**Training Results:**
-```
- 0/1000   11.001113891601562
-100/1000   4.941615581512451
-200/1000   4.233631134033203
-300/1000   5.208221435546875
-400/1000   4.291534423828125
-500/1000   4.187107086181641
-600/1000   6.156216144561768
-700/1000   5.745358467102051
-800/1000   4.903677463531494
-900/1000   6.526307106018066
-```
-</div>
-
-<div>
-
-**Loss Curve**  
-<img src="images/s1.png" alt="Loss curve - Step 1" width="350"/>
-
-</div>
-
-</div>
+<table>
+  <tr>
+    <td valign="top" width="50%">
+      <h3>Training Results</h3>
+      <pre>
+ 0/1000    11.0011
+100/1000   4.9416
+200/1000   4.2336
+300/1000   5.2082
+400/1000   4.2915
+500/1000   4.1871
+600/1000   6.1562
+700/1000   5.7454
+800/1000   4.9037
+900/1000   6.5263
+      </pre>
+    </td>
+    <td valign="top" width="50%">
+      <h3>Loss Curve</h3>
+      <img src="images/s1.png" alt="Loss curve - Step 1" width="320"/>
+    </td>
+  </tr>
+</table>
 
 
 
