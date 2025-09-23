@@ -24,8 +24,16 @@ A reproduction of GPT-2 from scratch. Includes the network architecture, optimiz
 
 
 ---
+## Configuration
+```
+n_layer    = 12
+n_head     = 12 
+n_embd     = 768 
+vocab_size = 50257 
+block_size = 1024
+```
 
-
+---
 
 ## Inference Example (Hugging Face GPT-2 weights in custom model)
 
@@ -42,6 +50,54 @@ Hello World ! I'm LLM. 1 was ( (1. A " ( for The is on by from the of by that..
 Hello World ! I'm LLM's " of in this and and- of, they have the the only a and that on as that all to on that 
 Hello World ! I'm LLM was being the of the and on the you just, one (: the most I. It you have or a to
 ```
+
+
+---
+
+
+
+
+
+## Progress
+
+
+### Step 1 
+
+**Training Configuration**
+- Max Iterations: 1000  
+- Learning Rate: 3e-4  
+- Batch Size: 32  
+- Context Length (T): 8 
+
+
+<div style="display: flex; align-items: flex-start; gap: 20px;">
+
+<div>
+
+
+**Training Results:**
+```
+ 0/1000   11.001113891601562
+100/1000   4.941615581512451
+200/1000   4.233631134033203
+300/1000   5.208221435546875
+400/1000   4.291534423828125
+500/1000   4.187107086181641
+600/1000   6.156216144561768
+700/1000   5.745358467102051
+800/1000   4.903677463531494
+900/1000   6.526307106018066
+```
+</div>
+
+<div>
+
+**Loss Curve**  
+<img src="images/s1.png" alt="Loss curve - Step 1" width="350"/>
+
+</div>
+
+</div>
 
 
 
