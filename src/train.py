@@ -12,7 +12,7 @@ import gpt2
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 max_iter = 20 # 10000
-lr = 1e-3
+lr = 3e-4
 
 
 
@@ -49,7 +49,7 @@ tokens = enc.encode(data)        #encoding
 
 B,T = 4,8
 temp = torch.tensor(tokens[:B*T+1])
-
+temp.to(device)
 xb = temp[:-1].view(B,T)
 yb = temp[1:].view(B,T)
 
@@ -80,7 +80,7 @@ for i in range(max_iter):
     
     
     
-    losses[i] = loss   # store losses
+    losses[i] = loss.item()   # store losses
     
 
 
