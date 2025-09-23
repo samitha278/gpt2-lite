@@ -24,7 +24,7 @@ A reproduction of GPT-2 from scratch. Includes the network architecture, optimiz
 
 
 ---
-## Configuration
+## GPT2 (small) Model Configuration
 ```
 n_layer    = 12
 n_head     = 12 
@@ -73,7 +73,7 @@ Hello World ! I'm LLM was being the of the and on the you just, one (: the most 
 <table>
   <tr>
     <td valign="top" width="50%">
-      <h3>Training Results</h3>
+      <h4>Training Results</h4>
       <pre>
  0/1000    11.0011
 100/1000   4.9416
@@ -88,8 +88,8 @@ Hello World ! I'm LLM was being the of the and on the you just, one (: the most 
       </pre>
     </td>
     <td valign="top" width="50%">
-      <h3>Loss Curve</h3>
-      <img src="images/s1.png" alt="Loss curve - Step 1" width="320"/>
+      <h4>Loss Curve</h4>
+      <img src="images/s1.png" alt="Loss curve - Step 1" width="400"/>
     </td>
   </tr>
 </table>

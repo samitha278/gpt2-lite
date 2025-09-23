@@ -37,6 +37,12 @@ class GPT2(nn.Module):
         ))
         
         self.lm_head = nn.Linear(config.n_embd,config.vocab_size, bias=False)
+        
+        
+        #weight sharing
+        self.transformer.wte.weight = self.lm_head.weight
+        #Save ~38M parameters
+        #Forces embeddings and output space to be in the same semantic space. (If “dog” is close to “cat” in embedding space, model is also encouraged to output them similarly).
 
 
 
