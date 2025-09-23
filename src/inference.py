@@ -7,14 +7,7 @@ import gpt2
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-max_iter = 10000
-lr = 1e-3
-
-config = gpt2.GPT2Config
-
-
-
-
+print(device)
 
 
 
@@ -27,7 +20,17 @@ model.eval()
 model.to(device)
 
 
-# Sampling from the model
+
+
+
+new_max_tokens = 32
+n_seq = 5
+
+
+
+
+
+# Encode
 import tiktoken
 
 enc = tiktoken.get_encoding('gpt2')
@@ -35,25 +38,49 @@ enc = tiktoken.get_encoding('gpt2')
 prompt = "Hello World ! I'm LLM"
 
 tokens = enc.encode(prompt)
-tokens = torch.tensor([tokens] ,dtype = torch.long)
+tokens = torch.tensor(tokens ,dtype = torch.long)
+tokens = tokens.unsqueeze(0).repeat(n_seq,1)           # n_seq , n_token
 
 x = tokens.to(device)
 
-new_max_tokens = 20
+
+
+
+
+
+
+# Sampling loop
 
 while x.size(1) < new_max_tokens:
 
   with torch.no_grad():
+    
+    
     logits = model(x)
 
     probs = F.softmax(logits[:,-1,:],dim = -1)
+    
+    topk_probs , topk_indicies = torch.topk(probs , 50 ,dim = -1)
+    
 
-    new_token = torch.multinomial(probs,  num_samples=1)
+    ix = torch.multinomial(topk_probs,  num_samples=1)
+    
+    x_col = torch.gather(topk_indicies , -1 , ix)
 
-    x = torch.cat([x,new_token],dim=1)
+    x = torch.cat((x,x_col),dim=1)
 
 
-out = x.view(-1).tolist()
 
-text = enc.decode(out)
-print(text)
+
+
+
+
+
+# Decode
+
+for i in range(n_seq):
+  
+  
+  tokens = x[i].tolist()
+  text = enc.decode(tokens)
+  print(text)
