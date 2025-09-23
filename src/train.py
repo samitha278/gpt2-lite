@@ -1,21 +1,29 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F 
+import tiktoken
 
 import gpt2 
 
 
 
+
+
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-max_iter = 10000
+max_iter = 20 # 10000
 lr = 1e-3
+
+
+
+#------------------------------------------------------------------
+
+#Initialize model
 
 config = gpt2.GPT2Config
 
-
-
-
-
+gpt2_model = gpt2.GPT2(config)
+gpt2_model = gpt2_model.to(device)
 
 
 #------------------------------------------------------------------
@@ -26,69 +34,56 @@ with open('data/input.txt', 'r') as f:
     text = f.read()
     
 
-#get characters from input.txt
-chars = sorted(list(set(text)))
-vocab_size = len(chars)
+
+#get encoder
+enc = tiktoken.get_encoding('gpt2')
 
 
-#encoding and decoding
-stoi = {s:i for i,s in enumerate(chars)}
-itos = {i:s for i,s in enumerate(chars)}
-
-encode = lambda s: [stoi[ch] for ch in s]
-decode = lambda l: ''.join([itos[i] for i in l])
-
-data = encode(text)
-n = int(0.9*len(data))
-train_data = data[:n]
-val_data = data[n:]
-
-#------------------------------------------------------------------
+#prepare data to train
+data = text[:1000]
+tokens = enc.encode(data)        #encoding 
 
 
-def get_batch(split):
-    bs = config.block_size
-    data = train_data if split=='train' else val_data
-    
-    ix = torch.randin(len(data)-bs,(bs,))
-    x = torch.tensor([data[i:i+bs] for i in ix])
-    y = torch.tensor([data[i+1:i+1+bs] for i in ix])
 
-    x,y = x.to(device) , y.to(device)
-    return x,y
+#Just one batch
+
+B,T = 4,8
+temp = torch.tensor(tokens[:B*T+1])
+
+xb = temp[:-1].view(B,T)
+yb = temp[1:].view(B,T)
+
 
 
 #------------------------------------------------------------------
 
 
 
-gpt2_model = gpt2.GPT2(config)
-gpt2_model = gpt2_model.to(device)
+
+#Train
+losses = torch.zeros((max_iter,))
 
 
-#------------------------------------------------------------------
-
-
-optimizer = torch.optim.adamW(gpt2_model.parameters, lr = lr)
+optimizer = torch.optim.AdamW(gpt2_model.parameters(),lr=lr)
 
 for i in range(max_iter):
+
+    # xb,yb = get_batch('train')
     
-    xb,yb = get_batch('train')
     logits , loss = gpt2_model(xb,yb)
     
+    
     #train
-    optimizer.zero_grad(set_to_none = True)
+    optimizer.zero_grad(set_to_none=True)
     loss.backward()
     optimizer.step()
+    
+    
+    
+    losses[i] = loss   # store losses
+    
 
 
-    #print losses
-    if i% (max_iter/10) == 0:
-        print(f'{i}/{max_iter}  {loss}')
-    if i == max_iter-1:
-        print(f'{max_iter}/{max_iter}  {loss}')
-        
-        
-#------------------------------------------------------------------
 
-
+print(losses[-1])
+ 

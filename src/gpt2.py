@@ -58,9 +58,8 @@ class GPT2(nn.Module):
         
         if targets is None:
             return logits
-        
         else:
-            loss = F.cross_entropy(logits.view(-1,self.config.n_embd),targets.view(-1))
+            loss = F.cross_entropy(logits.view(B*T,-1) ,targets.view(-1))
             return logits,loss
 
 
@@ -100,9 +99,6 @@ class GPT2(nn.Module):
           
     
                  
-            
-    def generate(self,idx,max_token):
-        pass
 
         
    

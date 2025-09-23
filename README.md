@@ -2,9 +2,7 @@
 
 
 
-A reproduction of GPT-2 from scratch. Includes the network architecture, optimized training pipeline, and hyperparameters inspired by the GPT-2 and GPT-3 papers, along with inference using Hugging Face pretrained parameters.
-
-
+A reproduction of GPT-2 from scratch. Includes the network architecture, optimized training pipeline and hyperparameters inspired by the GPT-2 and GPT-3 papers.
 
 
 ---
