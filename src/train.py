@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F 
 import tiktoken
+import time
 
 from gpt2 import GPT2,GPT2Config 
 
@@ -62,47 +63,49 @@ class DataLoader():
 
 
 
-max_iter = 1000
+max_iter = 100
 lr = 3e-4
-B = 32
-T = 8
+B = 4
+T = 1024
 
 
-#initialize model
+
 model = GPT2(GPT2Config())
 model = model.to(device)
+model = torch.compile(model)    # compile model into optimize form
 
-#create dataloader
+
 data = DataLoader(B,T)
 
-#optimizer object
 optimizer = torch.optim.AdamW(model.parameters(),lr = lr)
 
-#for store losses
 losses = torch.zeros((max_iter,))
 
 #optimize
 for i in range(max_iter):
-  
-    #get_batch
-    xb , yb = data.get_batch()
-    xb , yb = xb.to(device),yb.to(device)
 
-    #forward pass the model
+  t0 = time.time()   # time start
+
+  xb , yb = data.get_batch()
+  xb , yb = xb.to(device),yb.to(device)
+
+  #AMP
+  with torch.autocast(device_type=device, dtype=torch.bfloat16):   
     logits , loss = model(xb,yb)
 
-    optimizer.zero_grad()   #if not gradients will added to previous ones
-    loss.backward()         #backpropagation and calculate gradients
-    optimizer.step()        #update the parameters
+  optimizer.zero_grad()   
+  loss.backward()         
+  optimizer.step()        
 
-    losses[i] = loss.item() #store loss
+  torch.cuda.synchronize()   # cpu and cuda sync 
 
-    if i%100==0:print(f'{i}/{max_iter}   {loss.item()}')
+  t1 = time.time()   # time end
+  t = (t1 - t0)*1000   # ms
 
+  losses[i] = loss.item()
 
-    
+  if i%10==0 : print(f'{i}/{max_iter}   {loss.item()}    {t} ms')
+  
+  
 
-
-
-print(losses[-1])
  
