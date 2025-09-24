@@ -269,7 +269,7 @@ Time is for just one iteration
 800/1000   5.920889377593994    313.4734630584717 ms
 900/1000   6.097590446472168    309.53264236450195 ms
       </pre>
-      <p style="font-size:12px; color:#555; margin-top:8px;">
+      <p style="font-size:8px; color:#555; margin-top:8px;">
         <b>Note:</b> Sudden spike is normal in FP16 with GradScaler<br/>
         Cause: gradient overflow → that optimizer step skipped & scale lowered<br/>
         Loss looks high only for that step then training continues normally
@@ -287,12 +287,49 @@ Time is for just one iteration
 ---
 ## Flash Attention
 <p align="center">
-  <img src="images/fa.png" alt="Flash Attention" width="400"/><br>
+  <img src="images/fa.png" alt="Flash Attention" width="460"/><br>
   <sub>Source: <a href="https://arxiv.org/pdf/2205.14135">arXiv:2205.14135</a></sub>
 </p>
 
 ---
+### Step 6
 
+#### Flash Attention
+
+**Training Configuration**
+- Max Iterations: 1000  
+- Learning Rate: 3e-4  
+- Batch Size: 4  
+- Context Length (T): 1024 
+
+
+<table>
+  <tr>
+    <td valign="top" width="50%">
+      <h4>Training Results with Flash Attention</h4>
+      <pre>
+ 0/1000   10.936931610107422    32292.807579040527 ms
+100/1000   6.353199005126953    251.8608570098877 ms
+200/1000   5.951420783996582    260.0588798522949 ms
+300/1000   5.729452133178711    271.1455821990967 ms
+400/1000   5.413121223449707    263.012170791626 ms
+500/1000   5.050293445587158    258.4691047668457 ms
+600/1000   5.234034538269043    263.5805606842041 ms
+700/1000   5.261815071105957    263.399600982666 ms
+800/1000   4.9163384437561035   264.0724182128906 ms
+900/1000   5.236194610595703    257.6251029968262 ms
+      </pre>
+    </td>
+    <td valign="top" width="50%">
+      <h4>Loss Curve</h4>
+      <img src="images/s6.png" alt="Loss curve - Step 6" width="420"/>
+    </td>
+  </tr>
+</table>
+
+
+
+---
 
 ## References
 
