@@ -241,9 +241,10 @@ Time is for just one iteration
 ---
 ### Step 5
 
-#### torch.compile()
+#### [torch.compile()](https://docs.pytorch.org/tutorials/intermediate/torch_compile_tutorial.html)
 - Optimize the modle - works by capturing the computation graph → optimizing it → generating efficient kernels
 - Reduces memory movement and speeds up training
+- Speedup mainly comes from reducing Python overhead and GPU read/writes : Kernel Fusion
 
 **Training Configuration**
 - Max Iterations: 1000  ** 
@@ -267,11 +268,12 @@ Time is for just one iteration
 700/1000   6.105173110961914    310.18543243408203 ms
 800/1000   5.920889377593994    313.4734630584717 ms
 900/1000   6.097590446472168    309.53264236450195 ms
-
-- Sudden spike normal in FP16 with GradScaler 
-- Cause: gradient overflow → that optimizer step skipped & scale lowered 
-- Loss looks high only for that step then training continues normally 
       </pre>
+      <p style="font-size:12px; color:#555; margin-top:8px;">
+        <b>Note:</b> Sudden spike is normal in FP16 with GradScaler<br/>
+        Cause: gradient overflow → that optimizer step skipped & scale lowered<br/>
+        Loss looks high only for that step then training continues normally
+      </p>
     </td>
     <td valign="top" width="50%">
       <h4>Loss Curve</h4>
@@ -283,9 +285,13 @@ Time is for just one iteration
 
 
 ---
+## Flash Attention
+<p align="center">
+  <img src="images/fa.png" alt="Flash Attention" width="400"/><br>
+  <sub>Source: <a href="https://arxiv.org/pdf/2205.14135">arXiv:2205.14135</a></sub>
+</p>
 
-
-
+---
 
 
 ## References
@@ -293,3 +299,8 @@ Time is for just one iteration
 - [Language Models are Unsupervised Multitask Learners (GPT-2 paper)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)  
 - [Language Models are Few-Shot Learners (GPT-3 paper)](https://arxiv.org/abs/2005.14165)
 - [Automatic Mixed Precision - PyTorch](https://docs.pytorch.org/tutorials/recipes/recipes/amp_recipe.html)
+- [torch.compile()](https://docs.pytorch.org/tutorials/intermediate/torch_compile_tutorial.html)
+- [Flash Atttention](https://arxiv.org/pdf/2205.14135)
+- [Flash Atttention-2](https://arxiv.org/pdf/2307.08691)
+
+

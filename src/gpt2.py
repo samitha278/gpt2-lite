@@ -209,11 +209,16 @@ class SelfAttention(nn.Module):
         q = q.view(B, T, self.n_head, self.head_size).transpose(1, 2)    # ""     
         v = v.view(B, T, self.n_head, self.head_size).transpose(1, 2)    # ""     
         
-        att = (q @ k.transpose(-2, -1)) * (self.head_size**-0.5)         # B, n_head, T, T
-        att = att.masked_fill(self.bias[:T,:T] == 0, float('-inf'))
-        att = F.softmax(att, dim=-1)
+        # att = (q @ k.transpose(-2, -1)) * (self.head_size**-0.5)         # B, n_head, T, T
+        # att = att.masked_fill(self.bias[:T,:T] == 0, float('-inf'))
+        # att = F.softmax(att, dim=-1)
         
-        y = att @ v        # B, n_head, T, head_size
+        # y = att @ v        # B, n_head, T, head_size
+        
+        # Flash Attention
+        y = F.scaled_dot_product_attention(q,k,v,is_causal=True)
+        
+        
         y = y.transpose(1, 2).contiguous().view(B, T, C)   # B, T , n_embd   (n_embd = n_head * head_size)
         
         y = self.c_proj(y)
