@@ -10,7 +10,9 @@ from gpt2 import GPT2,GPT2Config
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
-
+torch.manual_seed(278)
+if torch.cuda.is_available():
+  torch.cuda.manual_seed(278)
 
 #------------------------------------------------------------------
 

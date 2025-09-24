@@ -52,7 +52,10 @@ class GPT2(nn.Module):
     def _init_weights(self,module):
         
         if isinstance(module,nn.Linear):
-            torch.nn.init.normal_(module.weight,mean=0.0,std=0.02)
+            std = 0.02
+            if hasattr(module,'FLAG'):
+                std *= (2*self.config.n_layer) ** -0.5           #scaledown std 
+            torch.nn.init.normal_(module.weight,mean=0.0,std=std)
             if module.bias is not None:
                 torch.nn.init.zeros_(module.bais)
         elif isinstance(module,nn.Embedding):
@@ -158,7 +161,8 @@ class MLP(nn.Module):
         
         self.c_fc = nn.Linear(config.n_embd,4*config.n_embd)
         self.gelu = nn.GELU()
-        self.c_proj = nn.Linear(4*config.n_embd,config.n_embd)            
+        self.c_proj = nn.Linear(4*config.n_embd,config.n_embd)  
+        self.c_proj.FLAG = 1          
   
         
     def forward(self,x):
@@ -187,6 +191,8 @@ class SelfAttention(nn.Module):
         self.c_attn = nn.Linear(n_embd, 3 * n_embd)     # fan out : n_head * 3 * head_size  
         
         self.c_proj = nn.Linear(n_embd, n_embd)
+        
+        self.c_proj.FLAG = 1
         
         self.register_buffer("bias", torch.tril(torch.ones(block_size, block_size)))
 

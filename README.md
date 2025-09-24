@@ -96,6 +96,43 @@ Hello World ! I'm LLM was being the of the and on the you just, one (: the most 
 
 
 
+---
+
+
+### Step 2 
+
+After model Initialization
+
+**Training Configuration**
+- Max Iterations: 1000  
+- Learning Rate: 3e-4  
+- Batch Size: 4  
+- Context Length (T): 32
+
+
+<table>
+  <tr>
+    <td valign="top" width="50%">
+      <h4>Training Results</h4>
+      <pre>
+ 0/1000   10.9186
+100/1000   6.5374
+200/1000   5.8276
+300/1000   6.2550
+400/1000   4.6903
+500/1000   6.2554
+600/1000   6.1157
+700/1000   5.1208
+800/1000   4.7785
+900/1000   6.2280
+      </pre>
+    </td>
+    <td valign="top" width="50%">
+      <h4>Loss Curve</h4>
+      <img src="images/s2.png" alt="Loss curve - Step 2" width="450"/>
+    </td>
+  </tr>
+</table>
 
 
 ---
