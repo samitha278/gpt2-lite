@@ -242,7 +242,7 @@ Time is for just one iteration
 ### Step 5
 
 #### torch.compile()
-- Optimize the model - works by capturing the computation graph → optimizing it → generating efficient kernels
+- Optimize the modle - works by capturing the computation graph → optimizing it → generating efficient kernels
 - Reduces memory movement and speeds up training
 
 **Training Configuration**
@@ -267,6 +267,10 @@ Time is for just one iteration
 700/1000   6.105173110961914    310.18543243408203 ms
 800/1000   5.920889377593994    313.4734630584717 ms
 900/1000   6.097590446472168    309.53264236450195 ms
+
+- Sudden spike normal in FP16 with GradScaler 
+- Cause: gradient overflow → that optimizer step skipped & scale lowered 
+- Loss looks high only for that step then training continues normally 
       </pre>
     </td>
     <td valign="top" width="50%">
