@@ -178,7 +178,7 @@ Time is for just one iteration
     </td>
     <td valign="top" width="50%">
       <h4>Loss Curve</h4>
-      <img src="images/s3.png" alt="Loss curve - Step 3" width="450"/>
+      <img src="images/s3.png" alt="Loss curve - Step 3" width="420"/>
     </td>
   </tr>
 </table>
@@ -231,7 +231,7 @@ Time is for just one iteration
     </td>
     <td valign="top" width="50%">
       <h4>Loss Curve</h4>
-      <img src="images/s4.png" alt="Loss curve - Step 4" width="450"/>
+      <img src="images/s4.png" alt="Loss curve - Step 4" width="420"/>
     </td>
   </tr>
 </table>
@@ -239,7 +239,46 @@ Time is for just one iteration
 
 
 ---
+### Step 5
 
+#### torch.compile()
+- Optimize the model - works by capturing the computation graph → optimizing it → generating efficient kernels
+- Reduces memory movement and speeds up training
+
+**Training Configuration**
+- Max Iterations: 1000  ** 
+- Learning Rate: 3e-4  
+- Batch Size: 4  
+- Context Length (T): 1024
+
+
+<table>
+  <tr>
+    <td valign="top" width="50%">
+      <h4>Training Results</h4>
+      <pre>
+ 0/1000   10.936920166015625    351.55177116394043 ms
+100/1000   6.479531288146973    311.5057945251465 ms
+200/1000   6.402681350708008    304.485559463501 ms
+300/1000   6.378115653991699    304.52775955200195 ms
+400/1000   6.456864356994629    305.42635917663574 ms
+500/1000   6.316775321960449    304.31127548217773 ms
+600/1000   6.322683334350586    312.0260238647461 ms
+700/1000   6.105173110961914    310.18543243408203 ms
+800/1000   5.920889377593994    313.4734630584717 ms
+900/1000   6.097590446472168    309.53264236450195 ms
+      </pre>
+    </td>
+    <td valign="top" width="50%">
+      <h4>Loss Curve</h4>
+      <img src="images/s5.png" alt="Loss curve - Step 5" width="400"/>
+    </td>
+  </tr>
+</table>
+
+
+
+---
 
 
 

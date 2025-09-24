@@ -73,6 +73,7 @@ if torch.cuda.is_available():
 
 model = GPT2(GPT2Config())
 model = model.to(device)
+model = torch.compile(model)    # compile model into optimize form
 
 
 
