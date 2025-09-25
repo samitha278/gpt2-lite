@@ -269,7 +269,7 @@ Time is for just one iteration
 800/1000   5.920889377593994    313.4734630584717 ms
 900/1000   6.097590446472168    309.53264236450195 ms
       </pre>
-      <p style="font-size:8px; color:#555; margin-top:8px;">
+      <p style="font-size:6px; color:#555; margin-top:8px;">
         <b>Note:</b> Sudden spike is normal in FP16 with GradScaler<br/>
         Cause: gradient overflow → that optimizer step skipped & scale lowered<br/>
         Loss looks high only for that step then training continues normally
@@ -342,29 +342,30 @@ Time is for just one iteration
 
 <table>
   <tr>
-    <td valign="top" width="50%">
+    <td valign="top" width="40%">
       <h4>Training Results with Gradient Clipping</h4>
       <pre>
  0/1000   11.04998779296875     28805.211305618286 ms   norm:3083477.0
-100/1000   6.655703544616699    262.1135711669922  ms   norm:27738.583984375
-200/1000   5.711727619171143    265.0024890899658  ms   norm:34191.14453125
-300/1000   5.42657470703125     262.3128890991211  ms   norm:36416.48046875
-400/1000   5.100064754486084    262.0069980621338  ms   norm:61068.41015625
-500/1000   4.681474685668945    266.07346534729004 ms   norm:52044.54296875
+100/1000   6.655703544616699    262.1135711669922  ms   norm:27738.5839843
+200/1000   5.711727619171143    265.0024890899658  ms   norm:34191.1445312
+300/1000   5.42657470703125     262.3128890991211  ms   norm:36416.4804687
+400/1000   5.100064754486084    262.0069980621338  ms   norm:61068.4101562
+500/1000   4.681474685668945    266.07346534729004 ms   norm:52044.5429687
 600/1000   4.786566257476807    262.3171806335449  ms   norm:50558.515625
 700/1000   4.816689491271973    261.13414764404297 ms   norm:61208.234375
 800/1000   4.530734539031982    269.9620723724365  ms   norm:53956.7109375
 900/1000   4.704817771911621    265.71011543273926 ms   norm:59809.46875
       </pre>
-      <p>
+      <p style="font-size:6px; color:#555; margin-top:8px;">
       Large initial norm is normal due to random initialization and small batch size</br>
       Without clipping: Optimizer steps can explode loss becomes NaN</br>
       With clipping: Gradients are rescaled to stay stable training becomes safer
       </p>
     </td>
-    <td valign="top" width="50%">
+    <td valign="top" width="60%">
       <h4>Loss Curve</h4>
       <img src="images/s7.png" alt="Loss curve - Step 7" width="220"/>
+      <h4>Norms</h4>
       <img src="images/s7_.png" alt="Norms - Step 7" width="220"/>
     </td>
   </tr>
