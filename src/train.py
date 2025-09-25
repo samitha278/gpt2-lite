@@ -60,7 +60,7 @@ class DataLoader():
 
 
 
-max_iter = 100
+max_iter = 1000
 lr = 3e-4
 B = 4
 T = 1024
@@ -71,15 +71,16 @@ if torch.cuda.is_available():
   torch.cuda.manual_seed(278)
 
 
-model = GPT2(GPT2Config())
+model = GPT2(GPT2Config(vocab_size = 50304))
 model = model.to(device)
 model = torch.compile(model)    # compile model into optimize form
 
 
 
 data = DataLoader(B,T)
-optimizer = torch.optim.AdamW(model.parameters(),lr = lr)
+optimizer = torch.optim.AdamW(model.parameters(),lr = lr, betas = (0.9,0.95),eps=1e-8)   #according to gpt3 paper
 losses = torch.zeros((max_iter,))
+norms = torch.zeros((max_iter,))
 
 
 #Gradient Scalar
@@ -99,20 +100,24 @@ for i in range(max_iter):
   with torch.autocast(device_type=device, dtype=torch.float16):   # FP16
     logits , loss = model(xb,yb)
 
-  optimizer.zero_grad()   
+  optimizer.zero_grad()
 
-  scaler.scale(loss).backward()     # multiplies loss by a scale factor    
-  scaler.step(optimizer)            # unscales gradients then call optimizer step        
+  scaler.scale(loss).backward()     # multiplies loss by a scale factor
+
+  norm = torch.nn.utils.clip_grad_norm_(model.parameters(),1.0)    # Gradient Clipping 
+
+  scaler.step(optimizer)            # unscales gradients then call optimizer step
   scaler.update()                   # adjusts the scale factor automatically each iteration
 
 
-  torch.cuda.synchronize()   
+  torch.cuda.synchronize() if torch.cuda.is_available() else None
 
   t1 = time.time()   # time end
   t = (t1 - t0)*1000 # ms
 
   losses[i] = loss.item()
+  norms[i] = norm.item()
 
-  if i%10==0 : print(f'{i}/{max_iter}   {loss.item()}    {t} ms')
+  if i%100==0 : print(f'{i}/{max_iter}   {loss.item()}    {t} ms   norm:{norm.item()}') 
 
  

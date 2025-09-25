@@ -287,7 +287,7 @@ Time is for just one iteration
 ---
 ## Flash Attention
 <p align="center">
-  <img src="images/fa.png" alt="Flash Attention" width="460"/><br>
+  <img src="images/fa.png" alt="Flash Attention" width="500"/><br>
   <sub>Source: <a href="https://arxiv.org/pdf/2205.14135">arXiv:2205.14135</a></sub>
 </p>
 
@@ -308,7 +308,7 @@ Time is for just one iteration
     <td valign="top" width="50%">
       <h4>Training Results with Flash Attention</h4>
       <pre>
-0/1000   11.04998779296875    29504.43410873413 ms
+ 0/1000   11.04998779296875    29504.43410873413 ms
 100/1000   6.266678333282471    224.99513626098633 ms
 200/1000   5.910876274108887    228.49464416503906 ms
 300/1000   5.714513778686523    230.88407516479492 ms
@@ -327,7 +327,48 @@ Time is for just one iteration
   </tr>
 </table>
 
+---
+### Step 7
 
+- Change AdamW hparams according to GPT-3 paper
+- Use Gradient Clipping to avoid instability
+
+**Training Configuration**
+- Max Iterations: 1000  
+- Learning Rate: 3e-4  
+- Batch Size: 4  
+- Context Length (T): 1024 
+
+
+<table>
+  <tr>
+    <td valign="top" width="50%">
+      <h4>Training Results with Gradient Clipping</h4>
+      <pre>
+ 0/1000   11.04998779296875     28805.211305618286 ms   norm:3083477.0
+100/1000   6.655703544616699    262.1135711669922  ms   norm:27738.583984375
+200/1000   5.711727619171143    265.0024890899658  ms   norm:34191.14453125
+300/1000   5.42657470703125     262.3128890991211  ms   norm:36416.48046875
+400/1000   5.100064754486084    262.0069980621338  ms   norm:61068.41015625
+500/1000   4.681474685668945    266.07346534729004 ms   norm:52044.54296875
+600/1000   4.786566257476807    262.3171806335449  ms   norm:50558.515625
+700/1000   4.816689491271973    261.13414764404297 ms   norm:61208.234375
+800/1000   4.530734539031982    269.9620723724365  ms   norm:53956.7109375
+900/1000   4.704817771911621    265.71011543273926 ms   norm:59809.46875
+      </pre>
+      <p>
+      Large initial norm is normal due to random initialization and small batch size</br>
+      Without clipping: Optimizer steps can explode loss becomes NaN</br>
+      With clipping: Gradients are rescaled to stay stable training becomes safer
+      </p>
+    </td>
+    <td valign="top" width="50%">
+      <h4>Loss Curve</h4>
+      <img src="images/s7.png" alt="Loss curve - Step 7" width="220"/>
+      <img src="images/s7_.png" alt="Norms - Step 7" width="220"/>
+    </td>
+  </tr>
+</table>
 
 ---
 
