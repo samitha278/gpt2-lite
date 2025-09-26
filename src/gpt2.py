@@ -118,7 +118,25 @@ class GPT2(nn.Module):
 
         return model
 
+
+
+
+    def config_optimizers(self,weight_decay , learning_rate , device):
+
+        param_dict = {name:p for name,p in self.named_parameters() if p.requires_grad}
         
+        #weight decay for only for parameter (dimension >= 2) tensors
+        decay_params = [p for name,p in param_dict.items() if p.dim()>=2]
+        nondecay_params = [p for name,p in param_dict.items() if p.dim()<2]
+
+        optim_groups = [
+            {'params':decay_params , 'weight_decay' :weight_decay},
+            {'params':nondecay_params,'weight_decay':0.0}                
+        ]
+
+        use_fused = 'cuda' in device     # kernel fusion AdamW
+        optimizer = torch.optim.AdamW(optim_groups,lr=learning_rate,betas =(0.9,0.95),eps=1e-8,fused=use_fused)
+        return optimizer
           
     
                  

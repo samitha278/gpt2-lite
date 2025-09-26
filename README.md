@@ -31,6 +31,9 @@ n_head     = 12
 n_embd     = 768 
 vocab_size = 50257 
 block_size = 1024
+
+Total #parameter tensors = 148
+Total #parameters = 124475904  (~124M)
 ```
 
 ---
@@ -403,14 +406,14 @@ Time is for just one iteration
 800/1000  4.6939  285.3720 ms  norm:204243.5781  lr:1.1693e-04
 900/1000  4.9968  288.0721 ms  norm:226479.4844  lr:7.4629e-05
       </pre>
+      <h4>Learning Rates</h4>
+      <img src="images/s8__.png" alt="Lrs - Step 8" width="300"/>
       <p><strong>from LR Schedule:</strong></p>
       <ul>
         <li>Linear warmup : Stable start</li>
         <li>Fast learning early (high learning rate after warmup)</li>
         <li>Cosine decay : Ensures good convergence at the end</li>
       </ul>
-      <h4>Learning Rates</h4>
-      <img src="images/s8__.png" alt="Lrs - Step 8" width="300"/>
     </td>
     <td valign="top" width="60%">
       <h4>Loss Curve</h4>
@@ -422,7 +425,48 @@ Time is for just one iteration
 </table>
 
 ---
+### Step 9
 
+- Fused AdamW & Weight Decay
+- Weight decay discourages large weights by adding a penalty term proportional to the squared magnitude of the weights.
+
+
+**Training Configuration**
+- Max Iterations: 1000  
+- Batch Size: 4  
+- Context Length (T): 1024 
+
+
+<table>
+  <tr>
+    <td valign="top" width="40%">
+      <h4>Training Results with Fused AdamW and Weight Decay</h4>
+      <pre>
+0/1000  11.0500  28093.091 ms  norm:3083478.50  lr:1.2000e-05
+100/1000  6.4019  220.3937 ms  norm:14655.1631  lr:5.9632e-04
+200/1000  5.6650  223.6030 ms  norm:2350.9248  lr:5.6746e-04
+300/1000  5.5272  233.0117 ms  norm:3941.6348  lr:5.1287e-04
+400/1000  5.2381  230.9189 ms  norm:3093.4365  lr:4.3846e-04
+500/1000  4.8576  229.7168 ms  norm:2934.7229  lr:3.5230e-04
+600/1000  4.9919  235.3790 ms  norm:2192.4456  lr:2.6372e-04
+700/1000  5.0633  237.4313 ms  norm:2855.9104  lr:1.8232e-04
+800/1000  4.7993  240.4399 ms  norm:5751.0132  lr:1.1693e-04
+900/1000  5.0887  241.5686 ms  norm:2847.8865  lr:7.4629e-05
+      </pre>
+      <p><strong>from Weight Decay:</strong></p>
+      <ul>
+        <li>Prevents weights from becoming too large and Helps avoid overfitting</li>
+        <li>Improves generalization on unseen data</li>
+      </ul>
+    </td>
+    <td valign="top" width="60%">
+      <h4>Loss Curve</h4>
+      <img src="images/s9.png" alt="Loss curve - Step 8" width="300"/>
+    </td>
+  </tr>
+</table>
+
+---
 
 ## References
 

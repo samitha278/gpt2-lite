@@ -110,7 +110,10 @@ norms = torch.zeros((max_iter,))
 lrs = torch.zeros((max_iter,))
 
 
-optimizer = torch.optim.AdamW(model.parameters(),lr = 6e-4,betas = (0.9,0.95),eps = 1e-8)
+# Optimizer with weight decay custom function
+optimizer = model.config_optimizers(weight_decay = 0.1 ,learning_rate = 6e-4,device=device)
+
+
 #Gradient Scalar
 scaler = torch.amp.GradScaler(device)     # Prevents gradient underflow when using FP16
 
