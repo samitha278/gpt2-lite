@@ -60,8 +60,6 @@ class DataLoader():
 
 
 
-max_iter = 1000
-lr = 3e-4
 B = 4
 T = 1024
 
@@ -76,17 +74,44 @@ model = model.to(device)
 model = torch.compile(model)    # compile model into optimize form
 
 
-
 data = DataLoader(B,T)
-optimizer = torch.optim.AdamW(model.parameters(),lr = lr, betas = (0.9,0.95),eps=1e-8)   #according to gpt3 paper
+
+# _____________________________________________________________________________
+
+# Learning Rate
+max_lr = 6e-4
+min_lr = max_lr * 0.1
+
+max_iter = 1000
+warmup_steps = max_iter * 0.05
+
+def next_lr(i):
+  # warmup stage : linear
+  if i < warmup_steps : 
+    return (max_lr/warmup_steps) * (i+1)
+  
+  if i > max_iter:
+    return min_lr
+
+  # cosine dacay
+  decay_ratio = (i-warmup_steps) / (max_iter-warmup_steps)
+  assert 0<= decay_ratio <=1
+  c = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
+
+  return min_lr + c * (max_lr - min_lr)
+
+
+# _____________________________________________________________________________
+
+
 losses = torch.zeros((max_iter,))
 norms = torch.zeros((max_iter,))
+lrs = torch.zeros((max_iter,))
 
 
+optimizer = torch.optim.AdamW(model.parameters(),lr = 6e-4,betas = (0.9,0.95),eps = 1e-8)
 #Gradient Scalar
 scaler = torch.amp.GradScaler(device)     # Prevents gradient underflow when using FP16
-
-
 
 #optimize
 for i in range(max_iter):
@@ -104,7 +129,14 @@ for i in range(max_iter):
 
   scaler.scale(loss).backward()     # multiplies loss by a scale factor
 
-  norm = torch.nn.utils.clip_grad_norm_(model.parameters(),1.0)    # Gradient Clipping 
+  norm = nn.utils.clip_grad_norm_(model.parameters(),1.0)    # inplace gradient clipping
+
+  # find and set learning rate
+  lr = next_lr(i)
+
+  # update optimizer this new lr
+  for param_group in optimizer.param_groups:
+    param_group['lr'] = lr
 
   scaler.step(optimizer)            # unscales gradients then call optimizer step
   scaler.update()                   # adjusts the scale factor automatically each iteration
@@ -117,7 +149,6 @@ for i in range(max_iter):
 
   losses[i] = loss.item()
   norms[i] = norm.item()
+  lrs[i] = lr
 
-  if i%100==0 : print(f'{i}/{max_iter}   {loss.item()}    {t} ms   norm:{norm.item()}') 
-
- 
+  if i%100==0 : print(f'{i}/{max_iter}  {loss.item():.4f}  {t:.4f} ms  norm:{norm.item():.4f}  lr:{lr:.4e}')

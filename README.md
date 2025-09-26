@@ -332,6 +332,7 @@ Time is for just one iteration
 
 - Change AdamW hparams according to GPT-3 paper
 - Use Gradient Clipping to avoid instability
+- Gradient Clipping : Backprop → Compute total norm → If too big → Rescale → Optimizer step
 
 **Training Configuration**
 - Max Iterations: 1000  
@@ -364,14 +365,58 @@ Time is for just one iteration
     </td>
     <td valign="top" width="60%">
       <h4>Loss Curve</h4>
-      <img src="images/s7.png" alt="Loss curve - Step 7" width="220"/>
+      <img src="images/s7.png" alt="Loss curve - Step 7" width="300"/>
       <h4>Norms</h4>
-      <img src="images/s7_.png" alt="Norms - Step 7" width="220"/>
+      <img src="images/s7_.png" alt="Norms - Step 7" width="300"/>
     </td>
   </tr>
 </table>
 
 ---
+### Step 8
+
+- Learning Rate Schedule
+- Warmup + Decay
+- Linear warmup (ramp up to max_lr = 6e-4)
+- Cosine decay (smoothly decays to min_lr = max_lr * 0.1 )
+
+
+**Training Configuration**
+- Max Iterations: 1000  
+- Batch Size: 4  
+- Context Length (T): 1024 
+
+
+<table>
+  <tr>
+    <td valign="top" width="40%">
+      <h4>Training Results with LR Schedule</h4>
+      <pre>
+0/1000  11.0500  31587.015 ms  norm:3083475.250  lr:1.2000e-05
+100/1000  6.3045  273.0086 ms  norm:127163.6641  lr:5.9632e-04
+200/1000  5.5345  272.9156 ms  norm:159696.4688  lr:5.6746e-04
+300/1000  5.3184  296.1235 ms  norm:166981.0938  lr:5.1287e-04
+400/1000  5.0724  283.6609 ms  norm:181526.6875  lr:4.3846e-04
+500/1000  4.7149  280.0109 ms  norm:159570.0469  lr:3.5230e-04
+600/1000  4.9071  283.3986 ms  norm:147432.3750  lr:2.6372e-04
+700/1000  5.0193  284.6563 ms  norm:164736.5156  lr:1.8232e-04
+800/1000  4.6939  285.3720 ms  norm:204243.5781  lr:1.1693e-04
+900/1000  4.9968  288.0721 ms  norm:226479.4844  lr:7.4629e-05
+      </pre>
+    </td>
+    <td valign="top" width="60%">
+      <h4>Loss Curve</h4>
+      <img src="images/s8.png" alt="Loss curve - Step 8" width="300"/>
+      <h4>Norms</h4>
+      <img src="images/s8_.png" alt="Norms - Step 8" width="300"/>
+      <h4>Learning Rates</h4>
+      <img src="images/s8__.png" alt="Lrs - Step 8" width="300"/>
+    </td>
+  </tr>
+</table>
+
+---
+
 
 ## References
 
