@@ -417,9 +417,9 @@ Time is for just one iteration
     </td>
     <td valign="top" width="60%">
       <h4>Loss Curve</h4>
-      <img src="images/s8.png" alt="Loss curve - Step 8" width="300"/>
+      <img src="images/s8.png" alt="Loss curve - Step 8" width="400"/>
       <h4>Norms</h4>
-      <img src="images/s8_.png" alt="Norms - Step 8" width="300"/>
+      <img src="images/s8_.png" alt="Norms - Step 8" width="400"/>
     </td>
   </tr>
 </table>
@@ -461,12 +461,59 @@ Time is for just one iteration
     </td>
     <td valign="top" width="60%">
       <h4>Loss Curve</h4>
-      <img src="images/s9.png" alt="Loss curve - Step 8" width="300"/>
+      <img src="images/s9.png" alt="Loss curve - Step 9" width="400"/>
     </td>
   </tr>
 </table>
 
 ---
+### Step 10
+
+- Gradient Accumulation
+Split large batch into smaller micro batches </br>
+Accumulate the gradients over multiple forward+backward passes</br>
+Only update the weights after processing micro batches
+ 
+
+**Training Configuration**
+- Max Iterations       : 100 
+- Total Batch size     : 65536 (2^16) ~65K
+- Micro batch size (B) : 4     (2^2)
+- Context Length (T)   : 1024  (2^10)
+- Gradient Accu steps  : 16    (2^4) = (2^16) / (2^10)*(2^2)
+
+
+<table>
+  <tr>
+    <td valign="top" width="40%">
+      <h4>Training Results with Gradient Accumulation</h4>
+      <pre>
+0/100  11.0047  3792.5212 ms  norm:3022787.0000  lr:1.2000e-04
+10/100  8.4386  3767.2260 ms  norm:192917.4531  lr:5.9632e-04
+20/100  7.4238  3645.7593 ms  norm:68436.3281  lr:5.6746e-04
+30/100  6.9540  3668.0806 ms  norm:41665.8750  lr:5.1287e-04
+40/100  6.6860  3656.0788 ms  norm:38676.5469  lr:4.3846e-04
+50/100  6.5474  3668.5312 ms  norm:35744.8555  lr:3.5230e-04
+60/100  6.5093  3654.3462 ms  norm:34978.3359  lr:2.6372e-04
+70/100  6.5029  3648.8955 ms  norm:27477.3652  lr:1.8232e-04
+80/100  6.4956  3671.9394 ms  norm:18563.4082  lr:1.1693e-04
+90/100  6.4972  3670.1610 ms  norm:17941.3672  lr:7.4629e-05
+      </pre>
+      <p><strong>from Gradient Accumulation:</strong></p>
+      <ul>
+        <li>Simulates larger batch size without more memory</li>
+        <li>Stabilize but Slower training</li>
+      </ul>
+    </td>
+    <td valign="top" width="60%">
+      <h4>Loss Curve</h4>
+      <img src="images/s10.png" alt="Loss curve - Step 10" width="400"/>
+    </td>
+  </tr>
+</table>
+
+---
+
 
 ## References
 

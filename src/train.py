@@ -60,19 +60,25 @@ class DataLoader():
 
 
 
-
-B = 4
-T = 1024
-
-
 torch.manual_seed(278)
 if torch.cuda.is_available():
-  torch.cuda.manual_seed(278)
+    torch.cuda.manual_seed(278)
 
 
 model = GPT2(GPT2Config(vocab_size = 50304))
 model = model.to(device)
 model = torch.compile(model)    # compile model into optimize form
+
+
+# _____________________________________________________________________________
+
+
+# Gradient Accumulation
+total_batch_size = 2**16   # ~65K
+B = 2**2       # mini batch size
+T = 2**10     # contex length = 1024
+
+ga_steps = total_batch_size // (B*T)  # gradient accumulation steps
 
 
 data = DataLoader(B,T)
@@ -83,23 +89,23 @@ data = DataLoader(B,T)
 max_lr = 6e-4
 min_lr = max_lr * 0.1
 
-max_iter = 1000
+max_iter = 100
 warmup_steps = max_iter * 0.05
 
 def next_lr(i):
-  # warmup stage : linear
-  if i < warmup_steps : 
-    return (max_lr/warmup_steps) * (i+1)
-  
-  if i > max_iter:
-    return min_lr
+    # warmup stage : linear
+    if i < warmup_steps :
+        return (max_lr/warmup_steps) * (i+1)
 
-  # cosine dacay
-  decay_ratio = (i-warmup_steps) / (max_iter-warmup_steps)
-  assert 0<= decay_ratio <=1
-  c = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
+    if i > max_iter:
+        return min_lr
 
-  return min_lr + c * (max_lr - min_lr)
+    # cosine dacay
+    decay_ratio = (i-warmup_steps) / (max_iter-warmup_steps)
+    assert 0<= decay_ratio <=1
+    c = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
+
+    return min_lr + c * (max_lr - min_lr)
 
 
 # _____________________________________________________________________________
@@ -109,6 +115,8 @@ losses = torch.zeros((max_iter,))
 norms = torch.zeros((max_iter,))
 lrs = torch.zeros((max_iter,))
 
+
+# _____________________________________________________________________________
 
 # Optimizer with weight decay custom function
 optimizer = model.config_optimizers(weight_decay = 0.1 ,learning_rate = 6e-4,device=device)
@@ -120,39 +128,52 @@ scaler = torch.amp.GradScaler(device)     # Prevents gradient underflow when usi
 #optimize
 for i in range(max_iter):
 
-  t0 = time.time()   # time start
 
-  xb , yb = data.get_batch()
-  xb , yb = xb.to(device),yb.to(device)
+    t0 = time.time()   # time start
 
-  #AMP
-  with torch.autocast(device_type=device, dtype=torch.float16):   # FP16
-    logits , loss = model(xb,yb)
-
-  optimizer.zero_grad()
-
-  scaler.scale(loss).backward()     # multiplies loss by a scale factor
-
-  norm = nn.utils.clip_grad_norm_(model.parameters(),1.0)    # inplace gradient clipping
-
-  # find and set learning rate
-  lr = next_lr(i)
-
-  # update optimizer this new lr
-  for param_group in optimizer.param_groups:
-    param_group['lr'] = lr
-
-  scaler.step(optimizer)            # unscales gradients then call optimizer step
-  scaler.update()                   # adjusts the scale factor automatically each iteration
+    optimizer.zero_grad()
 
 
-  torch.cuda.synchronize() if torch.cuda.is_available() else None
+    loss_ = 0.0
 
-  t1 = time.time()   # time end
-  t = (t1 - t0)*1000 # ms
+    # Gradient Accumulation loop for mini batch
+    for step in range(ga_steps):
+        xb , yb = data.get_batch()
+        xb , yb = xb.to(device),yb.to(device)
 
-  losses[i] = loss.item()
-  norms[i] = norm.item()
-  lrs[i] = lr
+        #AMP
+        with torch.autocast(device_type=device, dtype=torch.float16):   # FP16
+            logits , loss = model(xb,yb)
 
-  if i%100==0 : print(f'{i}/{max_iter}  {loss.item():.4f}  {t:.4f} ms  norm:{norm.item():.4f}  lr:{lr:.4e}')
+        loss /= ga_steps                  # normalize loss  
+        
+        loss_ += loss.detach()
+        scaler.scale(loss).backward()     # multiplies loss by a scale factor
+
+
+
+
+    norm = nn.utils.clip_grad_norm_(model.parameters(),1.0)    # inplace gradient clipping
+
+    # find and set learning rate
+    lr = next_lr(i)
+
+    # update optimizer this new lr
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
+
+    scaler.step(optimizer)            # unscales gradients then call optimizer step
+    scaler.update()                   # adjusts the scale factor automatically each iteration
+
+
+    torch.cuda.synchronize() if torch.cuda.is_available() else None
+
+    t1 = time.time()   # time end
+    t = (t1 - t0)*1000 # ms
+
+    losses[i] = loss_.item()
+    norms[i] = norm.item()
+    lrs[i] = lr
+
+    if i%10==0 : print(f'{i}/{max_iter}  {loss_.item():.4f}  {t:.4f} ms  norm:{norm.item():.4f}  lr:{lr:.4e}')
