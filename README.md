@@ -346,16 +346,16 @@ Time is for just one iteration
     <td valign="top" width="40%">
       <h4>Training Results with Gradient Clipping</h4>
       <pre>
- 0/1000   11.04998779296875     28805.211305618286 ms   norm:3083477.0
-100/1000   6.655703544616699    262.1135711669922  ms   norm:27738.5839843
-200/1000   5.711727619171143    265.0024890899658  ms   norm:34191.1445312
-300/1000   5.42657470703125     262.3128890991211  ms   norm:36416.4804687
-400/1000   5.100064754486084    262.0069980621338  ms   norm:61068.4101562
-500/1000   4.681474685668945    266.07346534729004 ms   norm:52044.5429687
-600/1000   4.786566257476807    262.3171806335449  ms   norm:50558.515625
-700/1000   4.816689491271973    261.13414764404297 ms   norm:61208.234375
-800/1000   4.530734539031982    269.9620723724365  ms   norm:53956.7109375
-900/1000   4.704817771911621    265.71011543273926 ms   norm:59809.46875
+0/1000     11.0500   28805.2113 ms   norm:3083477.0000
+100/1000    6.6557     262.1136 ms   norm:27738.5840
+200/1000    5.7117     265.0025 ms   norm:34191.1445
+300/1000    5.4266     262.3129 ms   norm:36416.4805
+400/1000    5.1001     262.0070 ms   norm:61068.4102
+500/1000    4.6815     266.0735 ms   norm:52044.5430
+600/1000    4.7866     262.3172 ms   norm:50558.5156
+700/1000    4.8167     261.1341 ms   norm:61208.2344
+800/1000    4.5307     269.9621 ms   norm:53956.7109
+900/1000    4.7048     265.7101 ms   norm:59809.4688
       </pre>
       <p style="font-size:6px; color:#555; margin-top:8px;">
       Large initial norm is normal due to random initialization and small batch size</br>
@@ -403,14 +403,20 @@ Time is for just one iteration
 800/1000  4.6939  285.3720 ms  norm:204243.5781  lr:1.1693e-04
 900/1000  4.9968  288.0721 ms  norm:226479.4844  lr:7.4629e-05
       </pre>
+      <p><strong>from LR Schedule:</strong></p>
+      <ul>
+        <li>Linear warmup : Stable start</li>
+        <li>Fast learning early (high learning rate after warmup)</li>
+        <li>Cosine decay : Ensures good convergence at the end</li>
+      </ul>
+      <h4>Learning Rates</h4>
+      <img src="images/s8__.png" alt="Lrs - Step 8" width="300"/>
     </td>
     <td valign="top" width="60%">
       <h4>Loss Curve</h4>
       <img src="images/s8.png" alt="Loss curve - Step 8" width="300"/>
       <h4>Norms</h4>
       <img src="images/s8_.png" alt="Norms - Step 8" width="300"/>
-      <h4>Learning Rates</h4>
-      <img src="images/s8__.png" alt="Lrs - Step 8" width="300"/>
     </td>
   </tr>
 </table>
