@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F 
 import tiktoken
 import time
+import math
 
 from gpt2 import GPT2,GPT2Config 
 
