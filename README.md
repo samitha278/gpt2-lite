@@ -469,7 +469,7 @@ Time is for just one iteration
 ---
 ### Step 10
 
-- Gradient Accumulation
+- Gradient Accumulation</br>
 Split large batch into smaller micro batches </br>
 Accumulate the gradients over multiple forward+backward passes</br>
 Only update the weights after processing micro batches
