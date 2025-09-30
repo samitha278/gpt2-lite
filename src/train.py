@@ -23,7 +23,7 @@ class DataLoader():
     self.B = B
     self.T = T
 
-    with open('data/input.txt', 'r') as f:
+    with open('/home/samitha/projects/gpt2-lite/data/input.txt', 'r') as f:
       text = f.read()
     
     enc = tiktoken.get_encoding('gpt2')
@@ -89,7 +89,7 @@ data = DataLoader(B,T)
 max_lr = 6e-4
 min_lr = max_lr * 0.1
 
-max_iter = 100
+max_iter = 10000
 warmup_steps = max_iter * 0.05
 
 def next_lr(i):
@@ -176,4 +176,4 @@ for i in range(max_iter):
     norms[i] = norm.item()
     lrs[i] = lr
 
-    if i%10==0 : print(f'{i}/{max_iter}  {loss_.item():.4f}  {t:.4f} ms  norm:{norm.item():.4f}  lr:{lr:.4e}')
+    if i%100==0 : print(f'{i}/{max_iter}  {loss_.item():.4f}  {t:.4f} ms  norm:{norm.item():.4f}  lr:{lr:.4e}')
