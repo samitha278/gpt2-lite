@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import tiktoken
 import time
 import math
+import numpy as np
 
 from gpt2 import GPT2,GPT2Config 
 
@@ -15,19 +16,22 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 #------------------------------------------------------------------
 
-
+# For wiki text
 class DataLoader():
 
-  def __init__(self,B,T):
+  def __init__(self,B,T,split):
 
     self.B = B
     self.T = T
 
-    with open('/home/samitha/projects/gpt2-lite/data/input.txt', 'r') as f:
-      text = f.read()
+
+    if split == 'train':
+      train_tokens = np.load("/home/samitha/projects/gpt2-lite/wikitext_np/train.npy", mmap_mode="r") 
+      self.tokens = torch.from_numpy(train_tokens.astype(np.int64))
+    elif split == 'val':
+      val_tokens   = np.load("/home/samitha/projects/gpt2-lite/wikitext_np/val.npy", mmap_mode="r")
+      self.tokens   = torch.from_numpy(val_tokens.astype(np.int64))
     
-    enc = tiktoken.get_encoding('gpt2')
-    self.tokens = torch.tensor(enc.encode(text))
 
     print(f'1 epoch size: {len(self.tokens//B*T)}')
 
@@ -81,7 +85,7 @@ T = 2**10     # contex length = 1024
 ga_steps = total_batch_size // (B*T)  # gradient accumulation steps
 
 
-data = DataLoader(B,T)
+data = DataLoader(B,T,'train')
 
 # _____________________________________________________________________________
 
@@ -89,7 +93,7 @@ data = DataLoader(B,T)
 max_lr = 6e-4
 min_lr = max_lr * 0.1
 
-max_iter = 10000
+max_iter = 100
 warmup_steps = max_iter * 0.05
 
 def next_lr(i):
@@ -176,4 +180,4 @@ for i in range(max_iter):
     norms[i] = norm.item()
     lrs[i] = lr
 
-    if i%100==0 : print(f'{i}/{max_iter}  {loss_.item():.4f}  {t:.4f} ms  norm:{norm.item():.4f}  lr:{lr:.4e}')
+    if i%10==0 : print(f'{i}/{max_iter}  {loss_.item():.4f}  {t:.4f} ms  norm:{norm.item():.4f}  lr:{lr:.4e}')
