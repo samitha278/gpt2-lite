@@ -5,6 +5,8 @@ import tiktoken
 import time
 import math
 import numpy as np
+import os
+import random
 
 from gpt2 import GPT2,GPT2Config 
 
@@ -73,7 +75,7 @@ if torch.cuda.is_available():
 
 model = GPT2(GPT2Config(vocab_size = 50304))
 model = model.to(device)
-model = torch.compile(model)    # compile model into optimize form
+model_compile = torch.compile(model)    # compile model into optimize form
 
 
 # _____________________________________________________________________________
@@ -89,7 +91,7 @@ ga_steps = total_batch_size // (B*T)  # gradient accumulation steps
 
 data = DataLoader(B,T,'train')
 
-import sys ; sys.exit(0)
+# import sys ; sys.exit(0)
 
 # _____________________________________________________________________________
 
@@ -97,7 +99,7 @@ import sys ; sys.exit(0)
 max_lr = 6e-4
 min_lr = max_lr * 0.1
 
-max_iter = 10000      # ~5 epochs , total train tokens ~119M , batch size ~65K 
+max_iter = 10000  # ~5 epochs , total train tokens ~119M , batch size ~65K 
 warmup_steps = max_iter * 0.05
 
 def next_lr(i):
@@ -126,6 +128,16 @@ lrs = torch.zeros((max_iter,))
 
 # _____________________________________________________________________________
 
+# og directory to write checkpoints and log 
+log_dir = "log"
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, f"log.txt")
+with open(log_file, "w") as f: 
+    pass
+
+# _____________________________________________________________________________
+
+
 # Optimizer with weight decay custom function
 optimizer = model.config_optimizers(weight_decay = 0.1 ,learning_rate = 6e-4,device=device)
 
@@ -138,9 +150,12 @@ for i in range(max_iter):
 
     t0 = time.time()   # time start
     
-        
+    final_step = (i == max_iter - 1) 
+    
+    #----------------------------------------------------------------------
+     
     # Validation
-    if i%100  == 0 :
+    if i% 200  == 0 or final_step:
       model.eval()      # evaluation mode
       val_data = DataLoader(B,T,'val')
       
@@ -161,43 +176,64 @@ for i in range(max_iter):
         
         
         print(f'Validation loss : {val_loss.item():.4f}')
+        with open(log_file, "a") as f:
+            f.write(f"{i} val {val_loss.item():.4f}\n")
+            
+        # Check point
+        if i > 0 and (i % 2500 == 0 or final_step):
+          checkpoint_path = os.path.join(log_dir, f"model_{i:05d}.pt")
+          checkpoint = {
+              'model': model.state_dict(),
+              'config': model.config,
+              'step': i,
+              'val_loss': val_loss.item(),
+              'optimizer': optimizer.state_dict(),
+              'rng_state': {
+                  'python': random.getstate(),
+                  'numpy': np.random.get_state(),
+                  'torch': torch.get_rng_state(),
+                  'torch_cuda': torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+              }
+          }
+          torch.save(checkpoint, checkpoint_path)
+          print(f"Checkpoint saved: {checkpoint_path}")
       
-    
+    #----------------------------------------------------------------------
     
     # Inference 
-    if i%100 == 0 and i>0:
+    if (i% 200 == 0 and i>0) or final_step:
       model.eval()
       
       
-    with torch.no_grad():
-      seq = 2
-      max_tokens = 32
-      
-      tokens = enc.encode(f'Hello World!, I\'m gpt 2')
-      tokens = torch.tensor(tokens,dtype = torch.long)
-      tokens = tokens.unsqueeze(0).repeat(seq,1)
-      
-      x = tokens.to(device)
-      gen = torch.Generator(device=device)
-      gen.manual_seed(278)
-      
-      while x.size(1) < max_tokens:
+      with torch.no_grad():
+        seq = 2
+        max_tokens = 32
+        
+        tokens = enc.encode(f'Hello World!, I\'m gpt 2')
+        tokens = torch.tensor(tokens,dtype = torch.long)
+        tokens = tokens.unsqueeze(0).repeat(seq,1)
+        
+        x = tokens.to(device)
+        gen = torch.Generator(device=device)
+        gen.manual_seed(278)
+        
+        while x.size(1) < max_tokens:
 
-        with torch.no_grad():
-          logits = model(x)
-          probs = F.softmax(logits[:,-1,:],dim = -1)
-          topk_probs , topk_indicies = torch.topk(probs , 50 ,dim = -1)
+          with torch.no_grad():
+            logits = model(x)
+            probs = F.softmax(logits[:,-1,:],dim = -1)
+            topk_probs , topk_indicies = torch.topk(probs , 50 ,dim = -1)
+        
+            ix = torch.multinomial(topk_probs,  num_samples=1 ,generator=gen)    
+            x_col = torch.gather(topk_indicies , -1 , ix)
+            x = torch.cat((x,x_col),dim=1)
+            
+        for j in range(seq):
+          tokens = x[j].tolist()
+          text = enc.decode(tokens)
+          print(text)
       
-          ix = torch.multinomial(topk_probs,  num_samples=1 ,generator=gen)    
-          x_col = torch.gather(topk_indicies , -1 , ix)
-          x = torch.cat((x,x_col),dim=1)
-          
-      for i in range(seq):
-        tokens = x[i].tolist()
-        text = enc.decode(tokens)
-        print(text)
-      
-      
+    #----------------------------------------------------------------------
     
     # Train
     optimizer.zero_grad()
@@ -211,7 +247,7 @@ for i in range(max_iter):
 
         #AMP
         with torch.autocast(device_type=device, dtype=torch.bfloat16):   # BF16
-            logits , loss = model(xb,yb)
+            logits , loss = model_compile(xb,yb)
 
         loss /= ga_steps                  # normalize loss  
         
@@ -244,4 +280,6 @@ for i in range(max_iter):
     norms[i] = norm.item()
     lrs[i] = lr
 
-    if i%10==0 : print(f'{i}/{max_iter}  {loss_.item():.4f}  {t:.4f} ms  norm:{norm.item():.4f}  lr:{lr:.4e}')
+    print(f'{i}/{max_iter}  {loss_.item():.4f}  {t:.4f} ms  norm:{norm.item():.4f}  lr:{lr:.4e}')
+    with open(log_file, "a") as f:
+        f.write(f"{i} train {loss_.item():.6f}\n")
