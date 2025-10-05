@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F 
 from dataclasses import dataclass
+import tiktoken
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -242,38 +243,38 @@ class SelfAttention(nn.Module):
 
 # ----------------------------------------------------------------------------------
 
-class DataLoader():
+# class DataLoader():
 
-  def __init__(self,B,T):
+#   def __init__(self,B,T):
 
-    self.B = B
-    self.T = T
+#     self.B = B
+#     self.T = T
 
-    with open('input.txt', 'r') as f:
-      text = f.read()
+#     with open('input.txt', 'r') as f:
+#       text = f.read()
 
-    enc = tiktoken.get_encoding('gpt2')
-    self.tokens = torch.tensor(enc.encode(text))
+#     enc = tiktoken.get_encoding('gpt2')
+#     self.tokens = torch.tensor(enc.encode(text))
 
-    print(f'1 epoch size: {len(self.tokens//B*T)}')
+#     print(f'1 epoch size: {len(self.tokens//B*T)}')
 
-    self.count = 0
+#     self.count = 0
 
 
 
-  def get_batch(self):
+#   def get_batch(self):
 
-    B,T = self.B , self.T
+#     B,T = self.B , self.T
 
-    temp = self.tokens[self.count:self.count+B*T+1]
+#     temp = self.tokens[self.count:self.count+B*T+1]
 
-    x = temp[:-1].view(B,T)   #inputs
-    y = temp[1:].view(B,T)    #targets
+#     x = temp[:-1].view(B,T)   #inputs
+#     y = temp[1:].view(B,T)    #targets
 
-    self.count += B*T
+#     self.count += B*T
 
-    # Reset
-    if (self.count+B*T+1) > len(self.tokens):
-      self.count = 0
+#     # Reset
+#     if (self.count+B*T+1) > len(self.tokens):
+#       self.count = 0
 
-    return x,y
+#     return x,y

@@ -2,3 +2,6 @@ torch
 tiktoken
 gdown
 matplotlib
+numpy
+tqdm
+datasets
