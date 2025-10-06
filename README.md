@@ -514,6 +514,65 @@ Only update the weights after processing micro batches
 
 ---
 
+### Step 11
+
+**Key Modifications**
+
+- AMP with **bfloat16** : Support RTX 4080 
+<py-script>
+    with torch.autocast(device_type=device,dtype=torch.bfloat16):
+        logits , loss = model(xb,yb)
+</py-script>
+
+- Removed gradient scaler
+- Added Validation loop and Inference loop
+- Checkpoint saved : x 10000
+
+ 
+
+**Training Configuration**
+- Hardware             : NVIDIA GeForce RTX 4080 16GB
+- Duration             : ~6 hours
+- Max Iterations       : 40000 
+- 
+- Dataset : **WikiText-100M**
+- Total Batch size     : 65536 (2^16) ~65K
+- Micro batch size (B) : 4     (2^2)
+- Context Length (T)   : 1024  (2^10)
+- Gradient Accu steps  : 16    (2^4) = (2^16) / (2^10)*(2^2)
+
+
+<table>
+  <tr>
+    <td valign="top" width="50%">
+      <h4>Training Results</h4>
+        <img src="images/s11_t.png" alt="Training steps" width="400"/>
+      <p><strong>Final losses:</strong></p>
+      <ul>
+        <li>Train loss : 2.1933 </li>
+        <li>Val loss   : 3.1442 </li>
+      </ul>
+    </td>
+    <td valign="top" width="50%">
+      <h4>Loss, Val curve</h4>
+      <img src="images/s11.png" alt="Loss, Val curve - Step 11" width="400"/>
+    </td>
+    <p><strong>Min losses:</strong></p>
+      <ul>
+        <li>Min Train Loss      : 1.790882</li>
+        <li>Min Validation Loss : 2.9785</li>
+      </ul>
+  </tr>
+</table>
+
+
+- Good training progress
+- Overfitting after ~9K steps
+- 
+- Next : Early stopping, Dropout, ..
+
+---
+
 
 ## References
 
