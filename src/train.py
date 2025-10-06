@@ -159,7 +159,7 @@ optimizer = model.config_optimizers(weight_decay = 0.1 ,learning_rate = 6e-4,dev
 
 
 # Load Trained Model
-resume_from = None # '/home/samitha/projects/gpt2-lite/src/log/model_09999.pt'
+resume_from = None # "/home/samitha/projects/gpt2-lite/src/log/model_39999.pt"
 start_step = 0
 
 if resume_from and os.path.exists(resume_from):
@@ -170,8 +170,8 @@ else:
       print(f'{resume_from} not found')
     print('starting from step 0')
     
-    with open(log_file, "w") as f: 
-      pass
+    # with open(log_file, "w") as f: 
+    #   pass
 
 
 #------------------------------------------------------------------
