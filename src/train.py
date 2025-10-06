@@ -16,6 +16,9 @@ from gpt2 import GPT2,GPT2Config
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+print(device)
+import sys;sys.exit(0)
+
 
 enc = tiktoken.get_encoding('gpt2')
 
