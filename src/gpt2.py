@@ -14,6 +14,7 @@ class GPT2Config:
     n_layer : int = 12
     n_head : int = 12
     n_embd : int = 768
+    dropout : float = 0.1
 
 
 # ----------------------------------------------------------------------------------
@@ -175,12 +176,16 @@ class MLP(nn.Module):
         self.gelu = nn.GELU()
         self.c_proj = nn.Linear(4*config.n_embd,config.n_embd)
         self.c_proj.FLAG = 1
+        
+        self.dropout = nn.Dropout(config.dropout)
 
 
     def forward(self,x):
         x = self.c_fc(x)
         x = self.gelu(x)
         x = self.c_proj(x)
+        
+        x = self.dropout(x)
 
         return x
 
@@ -207,6 +212,8 @@ class SelfAttention(nn.Module):
         self.c_proj.FLAG = 1
 
         self.register_buffer("bias", torch.tril(torch.ones(block_size, block_size)))
+        
+        self.dropout = nn.Dropout(config.dropout)
 
 
 
@@ -235,6 +242,8 @@ class SelfAttention(nn.Module):
         y = y.transpose(1, 2).contiguous().view(B, T, C)   # B, T , n_embd   (n_embd = n_head * head_size)
 
         y = self.c_proj(y)
+        
+        y = self.dropout(y)
         return y
 
 

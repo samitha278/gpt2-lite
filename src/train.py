@@ -17,7 +17,7 @@ from gpt2 import GPT2,GPT2Config
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 print(device)
-import sys;sys.exit(0)
+# import sys;sys.exit(0)
 
 
 enc = tiktoken.get_encoding('gpt2')
@@ -33,10 +33,10 @@ class DataLoader():
     self.T = T
 
     if split == 'train':
-      train_tokens = np.load("/home/samitha/projects/gpt2-lite/wikitext_np/train.npy", mmap_mode="r") 
+      train_tokens = np.load("/home/samitha/Projects/gpt2-lite/wikitext_np/train.npy", mmap_mode="r") 
       self.tokens = torch.from_numpy(train_tokens.astype(np.int64))
     elif split == 'val':
-      val_tokens   = np.load("/home/samitha/projects/gpt2-lite/wikitext_np/val.npy", mmap_mode="r")
+      val_tokens   = np.load("/home/samitha/Projects/gpt2-lite/wikitext_np/val.npy", mmap_mode="r")
       self.tokens   = torch.from_numpy(val_tokens.astype(np.int64))
     
     print(f'1 epoch size: {len(self.tokens)}')
@@ -113,7 +113,7 @@ data = DataLoader(B,T,'train')
 max_lr = 6e-4
 min_lr = max_lr * 0.1
 
-max_iter = 10000 * 4  # ~5 * 4 = ~ 20 epochs , total train tokens ~119M , batch size ~65K 
+max_iter = 12000  # total train tokens ~119M , batch size ~65K 
 warmup_steps = max_iter * 0.05
 
 def next_lr(i):
@@ -143,7 +143,7 @@ def next_lr(i):
 # _____________________________________________________________________________
 
 # og directory to write checkpoints and log 
-log_dir = "log"
+log_dir = "log_1"
 os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, f"log.txt")
 
