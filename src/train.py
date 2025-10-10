@@ -173,8 +173,8 @@ else:
       print(f'{resume_from} not found')
     print('starting from step 0')
     
-    # with open(log_file, "w") as f: 
-    #   pass
+    with open(log_file, "w") as f: 
+      pass
 
 
 #------------------------------------------------------------------
@@ -217,7 +217,7 @@ for i in range(start_step,max_iter):
             f.write(f"{i} val {val_loss.item():.4f}\n")
             
         # Check point
-        if i>start_step and (i % 10000 == 0 or final_step):
+        if i>start_step and (i % (max_iter//4) == 0 or final_step):
           checkpoint_path = os.path.join(log_dir, f"model_{i:05d}.pt")
           checkpoint = {
               'model': model.state_dict(),
